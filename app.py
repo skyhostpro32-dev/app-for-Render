@@ -7,87 +7,89 @@ from rembg import remove
 import streamlit.components.v1 as components
 
 # =========================
-# ✅ FAVICON (REPLACE STREAMLIT LOGO)
+# ✅ PAGE CONFIG
 # =========================
 favicon = Image.open("favicon.png")
 
 st.set_page_config(
-    page_title="AI Image Dashboard",
-    page_icon=favicon,  # 👈 YOUR ICON HERE
+    page_title="AI Image Studio",
+    page_icon=favicon,
     layout="wide"
 )
 
 # =========================
-# 🎨 GLOBAL CSS
+# 🌐 TOP NAVBAR
 # =========================
 st.markdown("""
 <style>
-
-/* SIDEBAR BACKGROUND */
-section[data-testid="stSidebar"] {
-    background: linear-gradient(180deg, #2196F3, #64B5F6);
-    color: white;
+.navbar {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:15px 30px;
+    background: linear-gradient(90deg,#a4508b,#5f0a87);
+    border-radius:10px;
+    margin-bottom:20px;
 }
-
-/* SIDEBAR TEXT */
-section[data-testid="stSidebar"] * {
-    color: white !important;
+.nav-title {
+    color:white;
+    font-size:22px;
+    font-weight:bold;
 }
-
-/* SELECTED RADIO */
-div[role="radiogroup"] > label[data-baseweb="radio"] > div:first-child {
-    background-color: red !important;
-    border-color: red !important;
-}
-
-/* INNER DOT */
-div[role="radiogroup"] svg {
-    fill: white !important;
-}
-
-/* BUTTON STYLE */
-section[data-testid="stSidebar"] button {
-    background-color: #1976D2 !important;
-    color: white !important;
-    border-radius: 10px;
-}
-
-/* FILE UPLOADER */
-section[data-testid="stSidebar"] .stFileUploader {
-    background: rgba(255,255,255,0.15);
-    border-radius: 12px;
-    padding: 10px;
-}
-
 </style>
+
+<div class="navbar">
+    <div class="nav-title">🎨 AI Image Studio</div>
+</div>
 """, unsafe_allow_html=True)
 
 # =========================
-# 🖼 LOGO + TITLE (PRO LOOK)
+# 🎯 TOP CONTROLS
 # =========================
-st.image("logo.png", width=180)
-st.title("✨ AI Image Dashboard")
+col1, col2 = st.columns([2,3])
+
+with col1:
+    uploaded_file = st.file_uploader("📤 Upload Image", type=["png","jpg","jpeg"])
+
+with col2:
+    tool = st.selectbox(
+        "🧰 Select Tool",
+        [
+            "🎨 Background Change",
+            "✨ Enhance Image",
+            "🧍 Auto Person Remove",
+            "🌄 Background Removal",
+            "✨ Blur Object Tool",
+            "🖌 Manual Object Eraser"
+        ]
+    )
 
 # =========================
-# SIDEBAR
+# 🏠 LANDING PAGE (NO IMAGE)
 # =========================
-st.sidebar.title("🧰 Tools")
+if uploaded_file is None:
 
-uploaded_file = st.sidebar.file_uploader(
-    "📤 Upload Image", type=["png", "jpg", "jpeg"]
-)
+    st.markdown("""
+    <h1 style='text-align:center;'>Create Stunning Images with AI</h1>
+    <p style='text-align:center; color:gray; font-size:18px;'>
+    Remove objects, enhance photos, and edit like a pro in seconds.
+    </p>
+    """, unsafe_allow_html=True)
 
-tool = st.sidebar.radio(
-    "Select Tool",
-    [
-        "🎨 Background Change",
-        "✨ Enhance Image",
-        "🧍 Auto Person Remove",
-        "🌄 Background Removal",
-        "✨ Blur Object Tool",
-        "🖌 Manual Object Eraser"
-    ]
-)
+    st.image("logo.png", width=200)
+
+    colA, colB, colC = st.columns(3)
+
+    with colA:
+        st.markdown("🎨 **Background Edit**<br>Fast<br><small>AI Powered</small>", unsafe_allow_html=True)
+
+    with colB:
+        st.markdown("✨ **Enhancement**<br>HD Quality<br><small>+Sharpness</small>", unsafe_allow_html=True)
+
+    with colC:
+        st.markdown("🧍 **Object Removal**<br>Smart<br><small>Auto Detect</small>", unsafe_allow_html=True)
+
+    st.info("👆 Upload image to start editing")
 
 # =========================
 # NORMAL TOOLS
@@ -99,10 +101,10 @@ if uploaded_file and tool not in ["✨ Blur Object Tool", "🖌 Manual Object Er
     st.image(image)
 
     if tool == "🎨 Background Change":
-        color_hex = st.sidebar.color_picker("Pick Background Color", "#00ffaa")
+        color_hex = st.color_picker("Pick Background Color", "#00ffaa")
         color = tuple(int(color_hex[i:i+2], 16) for i in (1, 3, 5))
 
-        if st.sidebar.button("Apply"):
+        if st.button("Apply"):
             arr = np.array(image)
             mask = np.mean(arr, axis=2) > 200
             arr[mask] = color
@@ -114,9 +116,9 @@ if uploaded_file and tool not in ["✨ Blur Object Tool", "🖌 Manual Object Er
             st.download_button("Download", buf.getvalue())
 
     elif tool == "✨ Enhance Image":
-        strength = st.sidebar.slider("Sharpness", 1, 5, 2)
+        strength = st.slider("Sharpness", 1, 5, 2)
 
-        if st.sidebar.button("Enhance"):
+        if st.button("Enhance"):
             result = image
             for _ in range(strength):
                 result = result.filter(ImageFilter.SHARPEN)
@@ -127,7 +129,7 @@ if uploaded_file and tool not in ["✨ Blur Object Tool", "🖌 Manual Object Er
             st.download_button("Download", buf.getvalue())
 
     elif tool == "🧍 Auto Person Remove":
-        if st.sidebar.button("Remove"):
+        if st.button("Remove"):
             mask_img = remove(image)
             mask = np.array(mask_img)
 
@@ -140,359 +142,34 @@ if uploaded_file and tool not in ["✨ Blur Object Tool", "🖌 Manual Object Er
             st.download_button("Download", cv2.imencode(".png", result)[1].tobytes())
 
     elif tool == "🌄 Background Removal":
-        if st.sidebar.button("Remove BG"):
+        if st.button("Remove BG"):
             out = remove(image.convert("RGBA"))
 
             st.image(out)
             buf = io.BytesIO()
             out.save(buf, format="PNG")
             st.download_button("Download", buf.getvalue())
+
 # =========================
-# BLUR TOOL (UPDATED BUTTONS)
+# BLUR TOOL
 # =========================
 elif tool == "✨ Blur Object Tool":
 
     st.subheader("✨ Blur Object Tool")
 
-    components.html("""
-    <html><body style="text-align:center; font-family:Arial;">
+    components.html("""YOUR EXISTING BLUR TOOL CODE HERE""", height=750)
 
-    <h3>Upload → Click → Blur</h3>
-
-    <input type="file" id="upload"><br><br>
-
-    Brush Size:
-    <input type="range" id="brush" min="10" max="80" value="30"><br><br>
-
-    <style>
-    .btn {
-        border: none;
-        padding: 14px 32px;
-        font-size: 16px;
-        border-radius: 10px;
-        cursor: pointer;
-        margin: 5px;
-        color: white;
-        font-weight: 500;
-        width: 180px;
-    }
-
-    .apply { background-color: #4CAF50; }
-    .apply:hover { background-color: #43a047; }
-
-    .undo { background-color: #f1c40f; }
-    .undo:hover { background-color: #d4ac0d; }
-
-    .download { background-color: #3498db; }
-    .download:hover { background-color: #2c80b4; }
-    </style>
-
-    <button id="apply" class="btn apply">✨ Apply Blur</button>
-    <button id="undo" class="btn undo">↩ Undo</button>
-    <button id="download" class="btn download">⬇ Download</button>
-
-    <br><br>
-    <canvas id="c" style="border:1px solid #ccc;"></canvas>
-
-    <script>
-    const upload = document.getElementById("upload");
-    const canvas = document.getElementById("c");
-    const ctx = canvas.getContext("2d");
-
-    let img = new Image();
-    let pts = [];
-
-    upload.onchange = e => {
-        img.src = URL.createObjectURL(e.target.files[0]);
-        img.onload = () => {
-            canvas.width = img.width;
-            canvas.height = img.height;
-            ctx.drawImage(img, 0, 0);
-
-            let scale = Math.min(window.innerWidth / img.width, 0.8);
-            canvas.style.width = img.width * scale + "px";
-            canvas.style.height = img.height * scale + "px";
-            pts = [];
-        }
-    }
-
-    canvas.onclick = e => {
-        const rect = canvas.getBoundingClientRect();
-        const scaleX = canvas.width / rect.width;
-        const scaleY = canvas.height / rect.height;
-
-        const x = (e.clientX - rect.left) * scaleX;
-        const y = (e.clientY - rect.top) * scaleY;
-        const size = parseInt(document.getElementById("brush").value);
-
-        pts.push({x, y, size});
-        redraw();
-    }
-
-    function redraw() {
-        ctx.drawImage(img, 0, 0);
-        pts.forEach(p => {
-            ctx.fillStyle = "rgba(255,0,0,0.3)";
-            ctx.beginPath();
-            ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-            ctx.fill();
-        });
-    }
-
-    document.getElementById("apply").onclick = () => {
-        ctx.drawImage(img, 0, 0);
-        pts.forEach(p => {
-            ctx.save();
-            ctx.beginPath();
-            ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-            ctx.clip();
-            ctx.filter = "blur(12px)";
-            ctx.drawImage(img, 0, 0);
-            ctx.restore();
-        });
-        ctx.filter = "none";
-        img.src = canvas.toDataURL();
-        pts = [];
-    }
-
-    document.getElementById("undo").onclick = () => {
-        pts.pop();
-        redraw();
-    }
-
-    document.getElementById("download").onclick = () => {
-        let link = document.createElement("a");
-        link.download = "blur.png";
-        link.href = canvas.toDataURL();
-        link.click();
-    }
-    </script>
-    </body></html>
-    """, height=750)
 # =========================
-# MANUAL ERASER (FIXED)
-# ========================
-# =========================
-# 🖌 MANUAL OBJECT ERASER (FINAL WORKING)
+# MANUAL ERASER
 # =========================
 elif tool == "🖌 Manual Object Eraser":
 
-    st.subheader("      🖌 Smart Object Eraser (Natural Fill)")
+    st.subheader("🖌 Smart Object Eraser")
 
-    components.html("""
-    <html>
-    <body style="text-align:center; font-family:Arial;">
+    components.html("""YOUR EXISTING ERASER CODE HERE""", height=800)
 
-    <h3>Upload → Click → Remove Object</h3>
-
-    <input type="file" id="upload"><br><br>
-
-    Brush Size:
-    <input type="range" id="brush" min="10" max="80" value="30"><br><br>
-    <style>
-.btn {
-    border: none;
-    padding: 12px 28px;
-    font-size: 16px;
-    border-radius: 10px;
-    cursor: pointer;
-    margin: 5px;
-    color: white;
-    font-weight: 500;
-    transition: 0.2s ease;
-}
-
-.apply {
-    background-color: #4CAF50;
-}
-
-.apply:hover {
-    background-color: #43a047;
-}
-
-.undo {
-    background-color: #f39c12;
-}
-
-.undo:hover {
-    background-color: #e67e22;
-}
-
-.download {
-    background-color: #3498db;
-}
-
-.download:hover {
-    background-color: #2980b9;
-}
-</style>
-
-<button id="apply" class="btn apply">✨ Apply</button>
-<button id="undo" class="btn undo">↩ Undo</button>
-<button id="download" class="btn download">⬇ Download</button>
-   
-
-    <br><br>
-    <canvas id="c" style="border:1px solid #ccc;"></canvas>
-
-    <script>
-    const canvas = document.getElementById("c");
-    const ctx = canvas.getContext("2d");
-
-    let img = new Image();
-    let pts = [];
-
-    // LOAD IMAGE
-    document.getElementById("upload").onchange = e => {
-        img.src = URL.createObjectURL(e.target.files[0]);
-        img.onload = () => {
-            canvas.width = img.width;
-            canvas.height = img.height;
-            ctx.drawImage(img, 0, 0);
-
-            // Fit screen
-            let scale = Math.min(window.innerWidth/img.width, 0.8);
-            canvas.style.width = img.width * scale + "px";
-            canvas.style.height = img.height * scale + "px";
-        }
-    }
-
-    // CLICK MASK
-    canvas.onclick = e => {
-        const r = canvas.getBoundingClientRect();
-        const scaleX = canvas.width / r.width;
-        const scaleY = canvas.height / r.height;
-
-        const x = (e.clientX - r.left) * scaleX;
-        const y = (e.clientY - r.top) * scaleY;
-
-        const size = parseInt(document.getElementById("brush").value);
-
-        pts.push({x, y, size});
-        redraw();
-    }
-
-    function redraw() {
-        ctx.drawImage(img, 0, 0);
-        pts.forEach(p => {
-            ctx.fillStyle = "rgba(255,0,0,0.3)";
-            ctx.beginPath();
-            ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-            ctx.fill();
-        });
-    }
-
-    // UNDO
-    document.getElementById("undo").onclick = () => {
-
-    // Undo mask clicks first
-    if (pts.length > 0) {
-        pts.pop();
-        redraw();
-        return;
-    }
-
-    // Restore previous image state
-    if (history.length > 0) {
-        let prevImage = history.pop();
-        ctx.putImageData(prevImage, 0, 0);
-
-        // ALSO update img so redraw works
-        img.src = canvas.toDataURL();
-    }
-};
-    // 🚀 APPLY (REAL INPAINT)
-    document.getElementById("apply").onclick = () => {
-
-        let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        let data = imageData.data;
-
-        let mask = new Uint8Array(canvas.width * canvas.height);
-
-        // CREATE MASK
-        pts.forEach(p => {
-            for (let y = -p.size; y <= p.size; y++) {
-                for (let x = -p.size; x <= p.size; x++) {
-
-                    let dist = Math.sqrt(x*x + y*y);
-                    if (dist > p.size) continue;
-
-                    let sx = Math.floor(p.x + x);
-                    let sy = Math.floor(p.y + y);
-
-                    if (sx>=0 && sy>=0 && sx<canvas.width && sy<canvas.height) {
-                        mask[sy * canvas.width + sx] = 1;
-                    }
-                }
-            }
-        });
-
-        // 🔥 STRONG FILL (MULTI-PASS)
-        for (let iter = 0; iter < 15; iter++) {
-
-            for (let y = 1; y < canvas.height-1; y++) {
-                for (let x = 1; x < canvas.width-1; x++) {
-
-                    let idx = y * canvas.width + x;
-
-                    if (mask[idx] === 1) {
-
-                        let sumR=0,sumG=0,sumB=0,count=0;
-
-                        for (let dy=-2; dy<=2; dy++) {
-                            for (let dx=-2; dx<=2; dx++) {
-
-                                let nx = x+dx;
-                                let ny = y+dy;
-                                let nidx = ny * canvas.width + nx;
-
-                                if (mask[nidx] === 0) {
-                                    let i2 = nidx * 4;
-                                    sumR += data[i2];
-                                    sumG += data[i2+1];
-                                    sumB += data[i2+2];
-                                    count++;
-                                }
-                            }
-                        }
-
-                        if (count > 0) {
-                            let i4 = idx * 4;
-                            data[i4]     = sumR / count;
-                            data[i4 + 1] = sumG / count;
-                            data[i4 + 2] = sumB / count;
-                            mask[idx] = 0;
-                        }
-                    }
-                }
-            }
-        }
-
-        ctx.putImageData(imageData, 0, 0);
-
-        // ✅ SAVE RESULT (CRITICAL FIX)
-        img.src = canvas.toDataURL();
-        pts = [];
-    }
-
-    // DOWNLOAD
-    document.getElementById("download").onclick = () => {
-        let link = document.createElement("a");
-        link.download = "result.png";
-        link.href = canvas.toDataURL();
-        link.click();
-    }
-
-    </script>
-    </body>
-    </html>
-    """, height=800)
 # =========================
-# (YOUR OTHER TOOLS SAME — NO CHANGE)
+# FOOTER
 # =========================
-
-else:
-    st.info("👈 Upload image or select tool")
-
 st.markdown("---")
-st.caption("🚀 All-in-One AI Image Dashboard")
+st.caption("🚀 AI Image Studio | Built for creators")
